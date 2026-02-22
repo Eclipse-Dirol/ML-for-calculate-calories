@@ -1,35 +1,49 @@
+import os
 import pandas as pd
-import numpy as np
 from work_with_db import work_with_db
-from sklearn.decomposition import PCA
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 import torch
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 class preprocessing():
     def __init__(self):
         self.db = work_with_db()
-        self.pca = PCA()
         self.data = pd.DataFrame(
         self.db.action_with_db(action='SELECT', columns=['id', 'Sex', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate', 'Body_Temp', 'Calories']),
         columns=['id', 'Sex', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate', 'Body_Temp', 'Calories']
     )
-
         
     def train_test_data(self):
         train_mask = self.data['Calories'].notna()
         self.train_data = self.data.loc[train_mask].drop(columns=['id', 'Calories'])
         self.train_target = self.data.loc[train_mask, 'Calories']
         self.test_data = self.data.loc[~train_mask].drop(columns=['id', 'Calories'])
+        return self.train_data.shape, self.train_target.shape, self.test_data.shape
         
     def col_trans(self):
-        pass
+        cat_cols = self.train_data.select_dtypes(include=['object', 'category']).columns.tolist()
+        num_cols = self.train_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        self.prep = ColumnTransformer(transformers=[
+            ('cat_cols', OneHotEncoder(handle_unknown='ignore'), cat_cols),
+            ('num_cols', StandardScaler(), num_cols)
+        ])
+        self.train_data = self.prep.fit_transform(self.train_data)
+        self.test_data = self.prep.transform(self.test_data)
     
     def to_tensor(self):
-        pass
+        os.makedirs(f'{BASE_DIR}/data/tensor', exist_ok=True)
+        X_tr = torch.tensor(self.train_data, dtype=torch.float32)
+        y_tr = torch.tensor(self.train_target, dtype=torch.float32)
+        X_test = torch.tensor(self.test_data, dtype=torch.float32)
+        torch.save(X_tr, f'{BASE_DIR}/data/tensor/X_tr.pt')
+        torch.save(y_tr, f'{BASE_DIR}/data/tensor/y_tr.pt')
+        torch.save(X_test, f'{BASE_DIR}/data/tensor/X_test.pt')
     
     def process(self):
         self.train_test_data()
         self.col_trans()
-        return self.to_tensor()
+        self.to_tensor()
         
