@@ -6,7 +6,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 import torch
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class preprocessing():
     def __init__(self):
@@ -35,9 +35,9 @@ class preprocessing():
     
     def to_tensor(self):
         os.makedirs(f'{BASE_DIR}/data/tensor', exist_ok=True)
-        X_tr = torch.tensor(self.train_data, dtype=torch.float32)
-        y_tr = torch.tensor(self.train_target, dtype=torch.float32)
-        X_test = torch.tensor(self.test_data, dtype=torch.float32)
+        X_tr = torch.tensor(self.train_data, dtype=torch.float32, device=device)
+        y_tr = torch.tensor(self.train_target, dtype=torch.float32, device=device)
+        X_test = torch.tensor(self.test_data, dtype=torch.float32, device=device)
         torch.save(X_tr, f'{BASE_DIR}/data/tensor/X_tr.pt')
         torch.save(y_tr, f'{BASE_DIR}/data/tensor/y_tr.pt')
         torch.save(X_test, f'{BASE_DIR}/data/tensor/X_test.pt')
