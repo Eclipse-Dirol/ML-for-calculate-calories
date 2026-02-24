@@ -45,6 +45,9 @@ class preprocessing():
         torch.save(y_tr, f'{BASE_DIR}/data/tensor/y_tr.pt')
         torch.save(X_test, f'{BASE_DIR}/data/tensor/X_test.pt')
         torch.save({'mean': float(y_mean), 'std': float(y_std)}, f'{BASE_DIR}/data/tensor/y_stats.pt')
+        
+    def for_pred(self, data: pd.DataFrame):
+        return self.prep.transform(data)
     
     def process(self):
         self.train_test_data()
