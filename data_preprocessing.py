@@ -33,7 +33,6 @@ class preprocessing():
         self.train_data = self.prep.fit_transform(self.train_data)
         self.test_data = self.prep.transform(self.test_data)
         self.train_target = (self.train_target - self.train_target.mean()) / self.train_target.std()
-        return self.train_data.shape
     
     def to_tensor(self):
         os.makedirs(f'{BASE_DIR}/data/tensor', exist_ok=True)
