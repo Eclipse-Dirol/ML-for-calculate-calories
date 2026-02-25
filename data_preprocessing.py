@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from work_with_db import work_with_db
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -21,7 +22,6 @@ class preprocessing():
         self.train_data = self.data.loc[train_mask].drop(columns=['id', 'Calories'])
         self.train_target = self.data.loc[train_mask, 'Calories']
         self.test_data = self.data.loc[~train_mask].drop(columns=['id', 'Calories'])
-        return self.train_data.shape, self.train_target.shape, self.test_data.shape
         
     def col_trans(self):
         cat_cols = self.train_data.select_dtypes(include=['object', 'category']).columns.tolist()
@@ -48,6 +48,14 @@ class preprocessing():
         
     def for_pred(self, data: pd.DataFrame):
         return self.prep.transform(data)
+    
+    def drop_feat(self, feature_index):
+        self.train_test_data()
+        self.col_trans()
+        data = self.train_data.copy()
+        data = np.delete(data, [feature_index], axis=1)
+        X_drop = torch.tensor(data, dtype=torch.float32, device=device)
+        torch.save(X_drop, f'{BASE_DIR}/data/tensor/X_drop.pt')
     
     def process(self):
         self.train_test_data()
