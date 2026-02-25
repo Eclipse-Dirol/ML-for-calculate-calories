@@ -32,19 +32,19 @@ class preprocessing():
         ])
         self.train_data = self.prep.fit_transform(self.train_data)
         self.test_data = self.prep.transform(self.test_data)
-        self.train_target = (self.train_target - self.train_target.mean()) / self.train_target.std()
+        self.y_mean = self.train_target.mean()
+        self.y_std = self.train_target.std()
+        self.train_target = (self.train_target - self.y_mean) / self.y_std
     
     def to_tensor(self):
         os.makedirs(f'{BASE_DIR}/data/tensor', exist_ok=True)
         X_tr = torch.tensor(self.train_data, dtype=torch.float32, device=device)
         y_tr = torch.tensor(self.train_target, dtype=torch.float32, device=device)
         X_test = torch.tensor(self.test_data, dtype=torch.float32, device=device)
-        y_mean = self.train_target.mean()
-        y_std = self.train_target.std()
         torch.save(X_tr, f'{BASE_DIR}/data/tensor/X_tr.pt')
         torch.save(y_tr, f'{BASE_DIR}/data/tensor/y_tr.pt')
         torch.save(X_test, f'{BASE_DIR}/data/tensor/X_test.pt')
-        torch.save({'mean': float(y_mean), 'std': float(y_std)}, f'{BASE_DIR}/data/tensor/y_stats.pt')
+        torch.save({'mean': float(self.y_mean), 'std': float(self.y_std)}, f'{BASE_DIR}/data/tensor/y_stats.pt')
         
     def for_pred(self, data: pd.DataFrame):
         return self.prep.transform(data)
