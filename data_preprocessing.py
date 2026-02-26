@@ -10,8 +10,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class preprocessing():
-    def __init__(self):
+    def __init__(self, data):
         self.db = work_with_db()
+        self.data = data
 
     def train(self):
         pass
