@@ -1,6 +1,10 @@
-import random
 from fastapi import FastAPI
 from pydantic import BaseModel
+import pandas as pd
+import numpy as np
+from data_preprocessing import preprocessing
+
+prep = preprocessing()
 
 class ClientData(BaseModel):
     Male: int
@@ -9,10 +13,10 @@ class ClientData(BaseModel):
     Height: float
     Weight: float
     Duration: float
-    
+
 app = FastAPI()
 
 @app.post('/score')
 def score(data: ClientData):
-    score = 500
-    return {'Calories': score}
+    data = np.array(list(data.model_dump().values()), dtype=float)
+    X = prep.another_try(data=data)

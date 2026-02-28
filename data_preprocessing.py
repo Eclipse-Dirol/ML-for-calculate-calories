@@ -1,64 +1,57 @@
 import os
+import pickle
 import pandas as pd
 import numpy as np
-from work_with_db import work_with_db
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 import torch
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class preprocessing():
     def __init__(self):
-        self.db = work_with_db()
-        self.data = pd.DataFrame(
-        self.db.action_with_db(action='SELECT', columns=['id', 'Sex', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate', 'Body_Temp', 'Calories']),
-        columns=['id', 'Sex', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate', 'Body_Temp', 'Calories']
-    )
-        
-    def train_test_data(self):
-        train_mask = self.data['Calories'].notna()
-        self.train_data = self.data.loc[train_mask].drop(columns=['id', 'Calories'])
-        self.train_target = self.data.loc[train_mask, 'Calories']
-        self.test_data = self.data.loc[~train_mask].drop(columns=['id', 'Calories'])
-        
-    def col_trans(self):
-        cat_cols = self.train_data.select_dtypes(include=['object', 'category']).columns.tolist()
-        num_cols = self.train_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
-        self.prep = ColumnTransformer(transformers=[
-            ('cat_cols', OneHotEncoder(handle_unknown='ignore'), cat_cols),
-            ('num_cols', StandardScaler(), num_cols)
-        ])
-        self.train_data = self.prep.fit_transform(self.train_data)
-        self.test_data = self.prep.transform(self.test_data)
-        self.y_mean = self.train_target.mean()
-        self.y_std = self.train_target.std()
-        self.train_target = (self.train_target - self.y_mean) / self.y_std
-    
-    def to_tensor(self):
-        os.makedirs(f'{BASE_DIR}/data/tensor', exist_ok=True)
-        X_tr = torch.tensor(self.train_data, dtype=torch.float32, device=device)
-        y_tr = torch.tensor(self.train_target, dtype=torch.float32, device=device)
-        X_test = torch.tensor(self.test_data, dtype=torch.float32, device=device)
-        torch.save(X_tr, f'{BASE_DIR}/data/tensor/X_tr.pt')
-        torch.save(y_tr, f'{BASE_DIR}/data/tensor/y_tr.pt')
-        torch.save(X_test, f'{BASE_DIR}/data/tensor/X_test.pt')
-        torch.save({'mean': float(self.y_mean), 'std': float(self.y_std)}, f'{BASE_DIR}/data/tensor/y_stats.pt')
-        
-    def for_pred(self, data: pd.DataFrame):
-        return self.prep.transform(data)
-    
-    def drop_feat(self, feature_index):
-        self.train_test_data()
-        self.col_trans()
-        data = self.train_data.copy()
-        data = np.delete(data, [feature_index], axis=1)
-        X_drop = torch.tensor(data, dtype=torch.float32, device=device)
-        torch.save(X_drop, f'{BASE_DIR}/data/tensor/X_drop.pt')
-    
-    def process(self):
-        self.train_test_data()
-        self.col_trans()
-        self.to_tensor()
-        
+        pass
+
+    def _train(self, data_tr: pd.DataFrame):
+        scaler_X = StandardScaler()
+        scaler_y = StandardScaler()
+        y_tr = data_tr.iloc[:, -1].values.reshape(-1,1)
+        X_tr = data_tr.iloc[:, 3:-1].values
+        X_tr = scaler_X.fit_transform(X_tr)
+        y_tr = scaler_y.fit_transform(y_tr)
+        with open(f'{BASE_DIR}/data/scaler/scaler_X.pkl', 'wb') as f:
+            pickle.dump(scaler_X, f)
+        with open(f'{BASE_DIR}/data/scaler/scaler_y.pkl', 'wb') as f:
+            pickle.dump(scaler_y, f)
+        return X_tr, y_tr
+
+    def _normalization(self, data: pd.DataFrame):
+        with open(f'{BASE_DIR}/data/scaler/scaler_X.pkl', 'rb') as f:
+            scaler_X = pickle.load(f)
+        le_cols = data.iloc[:, :2].values
+        data = data.iloc[:, 2:]
+        X_data = scaler_X.transform(data.values)
+        X_data = np.hstack([le_cols, X_data])
+        return X_data
+
+    def _to_tensor(self, X, y=None, train=False):
+        if train:
+            X = torch.tensor(X, dtype=torch.float32)
+            y = torch.tensor(y, dtype=torch.float32)
+            torch.save(X, f'{BASE_DIR}/data/tensor/X_tr.pt')
+            torch.save(y, f'{BASE_DIR}/data/tensor/y_tr.pt')
+        else:
+            X = torch.tensor(X, dtype=torch.float32)
+            return X
+
+    def first_try(self, data:pd.DataFrame):
+        X_tr, y_tr = self._train(data_tr=data)
+        self._to_tensor(X=X_tr, y=y_tr, train=True)
+
+    def another_try(self, data: pd.DataFrame):
+        X = self._normalization(data=data)
+        self._to_tensor(X=X)
+
+    def unnorm_y(self, y):
+        with open(f'{BASE_DIR}/data/scaler/scaler_y.pkl', 'rb') as f:
+            scaler_y = pickle.load(f)
+        return scaler_y.inverse_transform(y)
