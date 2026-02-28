@@ -49,7 +49,7 @@ class preprocessing():
 
     def another_try(self, data: pd.DataFrame):
         X = self._normalization(data=data)
-        self._to_tensor(X=X)
+        return self._to_tensor(X=X)
 
     def unnorm_y(self, y):
         with open(f'{BASE_DIR}/data/scaler/scaler_y.pkl', 'rb') as f:
