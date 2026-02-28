@@ -41,17 +41,16 @@ class preprocessing():
             torch.save(y, f'{BASE_DIR}/data/tensor/y_tr.pt')
         else:
             X = torch.tensor(X, dtype=torch.float32)
-            torch.save(X, f'{BASE_DIR}/data/tensor/X.pt')
-        
+            return X
+
     def first_try(self, data:pd.DataFrame):
         X_tr, y_tr = self._train(data_tr=data)
         self._to_tensor(X=X_tr, y=y_tr, train=True)
-    
+
     def another_try(self, data: pd.DataFrame):
         X = self._normalization(data=data)
-        # self._to_tensor(X=X)
-        return X
-        
+        self._to_tensor(X=X)
+
     def unnorm_y(self, y):
         with open(f'{BASE_DIR}/data/scaler/scaler_y.pkl', 'rb') as f:
             scaler_y = pickle.load(f)
