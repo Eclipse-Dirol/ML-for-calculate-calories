@@ -20,5 +20,5 @@ with st.form("Подача данных"):
     
 if sabmit:
     data = {'Male': Male, 'Female': Female, 'Age': Age, 'Height': Height, 'Weight': Weight, 'Duration': Duration}
-    response = requests.post('https://ml-for-calculate-calories.onrender.com', json=data)
+    response = requests.post('http://127.0.0.1:8000/score', json=data)
     st.success(f'Потраченные калории: {response.json():.0f}')
