@@ -30,7 +30,7 @@ class model_nn(nn.Module):
 class work_with_model():
     def __init__(self):
         self.model = model_nn(input_feat=6).to(device)
-        self.model.load_state_dict(torch.load(f'{BASE_DIR}/data/model/model_weight.pt'))
+        self.model.load_state_dict(torch.load(f'{BASE_DIR}/data/model/model_weight.pt', map_location=torch.device('cpu')))
 
     def predict(self, data):
         data = data.to(device)
