@@ -43,7 +43,7 @@ class preprocessing():
             X = torch.tensor(X, dtype=torch.float32)
             return X
 
-    def first_try(self, data:pd.DataFrame):
+    def first_try(self, data: pd.DataFrame):
         X_tr, y_tr = self._train(data_tr=data)
         self._to_tensor(X=X_tr, y=y_tr, train=True)
 
@@ -54,4 +54,6 @@ class preprocessing():
     def unnorm_y(self, y):
         with open(f'{BASE_DIR}/data/scaler/scaler_y.pkl', 'rb') as f:
             scaler_y = pickle.load(f)
-        return scaler_y.inverse_transform(y)
+        y = y.cpu().numpy()
+        y = scaler_y.inverse_transform(y)
+        return float(y[0][0])
